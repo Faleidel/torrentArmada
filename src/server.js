@@ -110,6 +110,9 @@ function startServer(opts){
                         span = Board address:
                             - marginRight: 5px
                         span = ${b.address()}
+                        div
+                            span :noselect = ${"Link: "}
+                            span = ${document.location.href + "?id="+b.address()}
             div
                 - maxWidth: 900px
                 - margin: auto

@@ -4,6 +4,7 @@ let renderThreads = require("./shared.js").renderThreads;
 let randomImg = require("./shared.js").randomImg;
 let startServer = require("./server.js").startServer;
 let startClient = require("./client.js").startClient;
+let getParameterByName = require("./shared.js").getParameterByName;
 
 document.addEventListener("DOMContentLoaded", function(event) {
     renderHomePage();
@@ -25,7 +26,7 @@ function renderHomePage(){
                    - maxWidth: 540px
                    - margin: auto
                    - textAlign: center
-                   input *clientCode
+                   input *clientCode = ${getParameterByName("id") || ""}
                        - flexGrow: 1
                        - fontSize: 25px
                    br
