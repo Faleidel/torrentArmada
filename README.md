@@ -1,6 +1,5 @@
 Todo:
 
-- add a way to save a board
 - add a way to archive old messages
 - add a board directory?
     - That would mean each server needs to also be a client of my board directory
