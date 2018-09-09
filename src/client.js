@@ -28,6 +28,7 @@ function startClient(key){
                     - marginBottom: 50px
                     div :title *title = ${infos.title}
                     div :description *description => ${infos.description}
+                    div :visitors *visitors = ${"Users: " + infos.visitors}
             `.setTo(refs.head);
         }
         

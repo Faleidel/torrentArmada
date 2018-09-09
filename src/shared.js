@@ -1,10 +1,19 @@
 let Bugout = require("bugout");
 
+function renderMd(text) {
+    var converter = new showdown.Converter(),
+        html      = converter.makeHtml(text+"");
+    
+    return "<div class='md'>"+html+"</div>";
+}
+
 function renderThreads(threads, cont, interface) {
     let refs2 = tmpl`
-        div = Make a new thread
-            - fontSize: 20px
-        *newThread ${renderMakeNewPost(null, interface, true)}
+        div
+            - marginBottom: 10px
+            div = Make a new thread
+                - fontSize: 20px
+            *newThread ${renderMakeNewPost(null, interface, true)}
         div :main *cont
     `.setTo(cont);
     
@@ -15,7 +24,7 @@ function renderThreads(threads, cont, interface) {
             div :post *post
                 div :user = ${post.user}
                 div :date = ${new Date(post.date).toDateString()}
-                div :content = ${post.content}
+                div :content => ${renderMd(post.content)}
                 div :answer *answer = answer
                     (click) ${answer}
                 *ans ${renderMakeNewPost(post, {mkPost: p => {rfs.ans.hide(); interface.mkPost(p)}}, false)}
@@ -28,6 +37,9 @@ function renderThreads(threads, cont, interface) {
                         (click) ${_ => interface.deletePost(post)}
                 div :childrens *childrens
         `.appendTo(parent);
+        
+        if (!post.parent)
+            rfs.post.classList.add("rootPost");
         
         post.rfs = rfs;
         posts[post.id] = post;
@@ -59,8 +71,12 @@ function renderMakeNewPost(post, interface, show){
     let comp = tmpl`
         div *cont
             textarea *input
-            button *ok = Send
-                (click) ${sendPost}
+                - width: 400px
+                - height: 50px
+            div
+                - marginTop: 10px
+                button *ok = Send
+                    (click) ${sendPost}
     `;
     let refs = comp.obj;
     
@@ -94,3 +110,4 @@ function randomImg(){
 exports.renderMakeNewPost = renderMakeNewPost;
 exports.renderThreads = renderThreads;
 exports.randomImg = randomImg;
+exports.renderMd = renderMd;

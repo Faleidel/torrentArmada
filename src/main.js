@@ -44,10 +44,17 @@ function renderHomePage(){
                     - textAlign: center
                     - marginTop: 15px
                     textarea *serverData
+                        - fontSize: 31px
+                        - height: 31px
                     button *doLoadServer = load
+                        - position: relative
+                        - bottom: 3px
+                        - marginLeft: 10px
                         (click) ${_ => startServer(JSON.parse(refs.serverData.value))}
                         
     `.setTo(document.body);
+    
+    refs.serverData.setAttribute("placeholder", "board data");
     
     refs.landing.style.backgroundImage = randomImg();
     

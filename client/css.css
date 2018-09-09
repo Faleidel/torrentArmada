@@ -26,14 +26,17 @@ body {
     margin-bottom: 0px;
 }
 
-.post:only-child:not(.main > div){
+.post:only-child:not(.rootPost){
     border: none;
     background: none !important;
     margin-bottom: 0px;
     padding: 0px;
+    border-top: 1px solid black;
+    border-radius: 0;
+    padding-top: 15px;
 }
 
-.post:only-child:not(.main > div) > .childrens {
+.post:only-child:not(.rootPost) > .childrens {
     margin-left: 0px;
     margin-top: 0px;
 }

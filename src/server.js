@@ -53,64 +53,82 @@ function startServer(opts){
     // INFOS
     let boardName        = "Your board name";
     let boardDescription = "Your board description";
+    let visitors         = 0;
     
     if (opts) {
         if (opts.infos.boardName)
             boardName = opts.infos.boardName;
         if (opts.infos.boardDescription)
             boardDescription = opts.infos.boardDescription;
+        if (opts.infos.visitors)
+            visitors = opts.infos.visitors;
     }
     
     // HTML
     let refs = tmpl`
         div :landing *landing
             - minHeight: 100vh
+            div :topInfos *topInfos
+                - paddingBottom: 35px
+                - borderBottom: 1px solid black
+                div
+                    - maxWidth: 900px
+                    - margin: auto
+                    - paddingTop: 50px
+                    div
+                        div = Board name:
+                            - fontSize: 25px
+                        input *boardName :boardNameInput = ${boardName}
+                            - fontSize: 40px
+                            (input) ${_ => {boardName = refs.boardName.value; sendUpdate()}}
+                    div
+                        div = Board description:
+                            - fontSize: 25px
+                            - marginTop: 25px
+                        textarea *boardDescription :boardDescriptionInput = ${boardDescription}
+                            - fontSize: 25px
+                            - width: 50%
+                            (input) ${_ => {boardDescription = refs.boardDescription.value; sendUpdate()}}
+                        div *visitors = ${"Visitors:" + visitors}
+                            - marginTop: 5px
+                        div :loadAndSave
+                            - paddingTop: 15px
+                            button *save = Save board datas
+                                (click) ${showSave}
+                            div *saveDataCont
+                                - display: none
+                                button *hideSave = Hide 
+                                    (click) ${hideSave}
+                                div = Copy this data to your clipboard
+                                    - marginTop: 15px
+                                textarea *dataInput
+                                    - width: 100%
+                                    - height: 100px
+                    div
+                        - fontSize: 25px
+                        - marginTop: 15px
+                        span = Board address:
+                            - marginRight: 5px
+                        span = ${b.address()}
             div
                 - maxWidth: 900px
                 - margin: auto
-                - paddingTop: 50px
-                div
-                    div = Board name:
-                        - fontSize: 25px
-                    input *boardName :boardNameInput = ${boardName}
-                        - fontSize: 40px
-                        (input) ${_ => {boardName = refs.boardName.value; sendUpdate()}}
-                div
-                    div = Board description:
-                        - fontSize: 25px
-                        - marginTop: 25px
-                    textarea *boardDescription :boardDescriptionInput = ${boardDescription}
-                        - fontSize: 25px
-                        - width: 50%
-                        (input) ${_ => {boardDescription = refs.boardDescription.value; sendUpdate()}}
-                    div :loadAndSave
-                        - paddingTop: 15px
-                        button *save = Save board datas
-                            (click) ${showSave}
-                        div *saveDataCont
-                            - display: none
-                            button *hideSave = Hide 
-                                (click) ${hideSave}
-                            div = Copy this data to your clipboard
-                                - marginTop: 15px
-                            textarea *dataInput
-                div
-                    - fontSize: 25px
-                    - marginTop: 15px
-                    span = Board address:
-                        - marginRight: 5px
-                    span = ${b.address()}
                 div *threads
                     - paddingTop: 25px
     `.setTo(document.body);
     
     refs.landing.style.backgroundImage = randomImg();
+    do {
+        refs.topInfos.style.backgroundImage = randomImg();
+    }
+    while (refs.landing.style.backgroundImage == refs.topInfos.style.backgroundImage)
     
     function showSave(){
         refs.dataInput.value = JSON.stringify({ threads: threadList
                                               , seed: b.seed
                                               , infos: { boardName: boardName
                                                        , boardDescription: boardDescription
+                                                       , visitors: visitors
                                                        }
                                               });
         refs.saveDataCont.style.display = "block";
@@ -165,9 +183,18 @@ function startServer(opts){
             b.send({ type: "infos"
                    , title: boardName
                    , description: boardDescription
+                   , visitors: visitors
                    });
         },5000);
     }
+    
+    // ON SEEN
+    b.on("seen", _ => {
+        visitors++;
+        refs.visitors.textContent = "Visitors: " + visitors;
+        sendUpdate();
+    });
+    
     
     // GET THREADS MSG
     b.register("getThreads", function(address, args, callback) {
@@ -188,6 +215,7 @@ function startServer(opts){
     b.register("getInfos", function(address, args, cb){
         cb({ title: boardName
            , description: boardDescription
+           , visitors: visitors
            });
     })
 }
