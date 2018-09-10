@@ -85,3 +85,16 @@ input, textarea {
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome and Opera */
 }
+
+.board {
+    text-align: center;
+}
+
+.board button {
+    font-size: 18px;
+}
+
+.board .name, .board .date {
+    font-size: 20px;
+    margin-left: 15px;
+}

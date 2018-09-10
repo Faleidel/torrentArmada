@@ -5,9 +5,15 @@ let randomImg = require("./shared.js").randomImg;
 let startServer = require("./server.js").startServer;
 let startClient = require("./client.js").startClient;
 let getParameterByName = require("./shared.js").getParameterByName;
+let startDirectory = require("./directory.js").startDirectory;
+let getBoards = require("./directory.js").getBoards;
 
 document.addEventListener("DOMContentLoaded", function(event) {
-    renderHomePage();
+    if (getParameterByName("dir")) {
+        startDirectory();
+    }
+    else
+        renderHomePage();
 });
 
 function renderHomePage(){
@@ -32,6 +38,11 @@ function renderHomePage(){
                    br
                    button *startClient = Join
                        - marginTop: 25px
+                
+                div *boards = Loading boards...
+                    - maxWidth: 450px
+                    - margin: auto
+                    - marginTop: 20px
                 
                 div :linkButton *startServer = or create your own
                     - textAlign: center
@@ -61,6 +72,23 @@ function renderHomePage(){
     
     refs.startServer.onclick = _ => startServer();
     refs.startClient.onclick = _ => startClient(refs.clientCode.value);
+    
+    getBoards("bYZgAump8PhzE5pDYGiNcSMdDSKeHZsp4J", function(boards){
+        refs.boards.innerHTML = "";
+        
+        Object.keys(boards).map(id => {
+            let name = boards[id].name;
+            let date = boards[id].date;
+            
+            let rfs = tmpl`
+                div :board
+                    button = Join
+                        (click) ${_ => startClient(id)}
+                    span :name = ${name}
+                    span :date = ${Math.floor((new Date().getTime() - date)/1000/60) + "m ago"}
+            `.appendTo(refs.boards);
+        });
+    });
 }
 
 exports.renderHomePage = renderHomePage;

@@ -2,6 +2,9 @@ let Bugout = require("bugout");
 let renderMakeNewPost = require("./shared.js").renderMakeNewPost;
 let renderThreads = require("./shared.js").renderThreads;
 let randomImg = require("./shared.js").randomImg;
+let addBoard = require("./directory").addBoard;
+
+let directoryAddr = "bYZgAump8PhzE5pDYGiNcSMdDSKeHZsp4J";
 
 function startServer(opts){
     
@@ -63,6 +66,8 @@ function startServer(opts){
         if (opts.infos.visitors)
             visitors = opts.infos.visitors;
     }
+    
+    addBoard(directoryAddr, b.address(), boardName);
     
     // HTML
     let refs = tmpl`
@@ -182,14 +187,19 @@ function startServer(opts){
     let updateTimeout = null;
     function sendUpdate(){
         clearTimeout(updateTimeout);
-        setTimeout(function(){
+        updateTimeout = setTimeout(function(){
             b.send({ type: "infos"
                    , title: boardName
                    , description: boardDescription
                    , visitors: visitors
                    });
+            addBoard(directoryAddr, b.address(), boardName);
         },5000);
     }
+    
+    setInterval(function(){
+        addBoard(directoryAddr, b.address(), boardName);
+    }, 1000*60*60);
     
     // ON SEEN
     b.on("seen", _ => {
