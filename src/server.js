@@ -23,8 +23,17 @@ function startServer(opts){
         
         if (parent)
             posts[parent].childrens.push(post);
-        else
+        else {
             threadList.push(post);
+        }
+        
+        threadList = threadList.sort((t1,t2) => t1.date - t2.date);
+        let tl2 = threadList.sort((t1,t2) => t1.childrens.length - t2.childrens.length);
+        for (let i = 0 ; i < tl2.length/2 ; i++) {
+            let t = tl2[i];
+            threadList.splice(threadList.findIndex(x => x == t), 1);
+            threadList.splice(i*2, 0, t);
+        }
         
         return post;
     }
@@ -40,16 +49,6 @@ function startServer(opts){
             p.childrens.map(doPost);
         };
         threadList.map(doPost);
-    }
-    
-    // RANDOM DATA FOR TESTS
-    if (!opts) {
-        newPost("faleidel","some random shit", null);
-        newPost("faleidel","some random shit2", null);
-        newPost("faleidel","some random shit3", null);
-        newPost("faleidel","some random shit4", null);
-        Object.values(posts).map(p => newPost("faleidel", "22222", p.id));
-        Object.values(posts).map(p => newPost("faleidel", Math.random(), p.id));
     }
     
     // INFOS

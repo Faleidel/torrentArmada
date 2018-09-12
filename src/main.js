@@ -64,6 +64,17 @@ function renderHomePage(){
                         - bottom: 3px
                         - marginLeft: 10px
                         (click) ${_ => startServer(JSON.parse(refs.serverData.value))}
+                div => ${` <div class="about">
+                               <h2>Whats is this?<h2>
+                               <p> This is a peer to peer message board with reddit like comments base on WebRTC and web torrents technologie.
+                                   It uses <a href="https://github.com/chr15m/bugout">bugout</a> for the WebRTC and web torrents.
+                               </p>
+                               <p> Each board is hosted on the client browser tab that created it.
+                                   The board list is made using a hardcoded bugout address that simply register board names.
+                                   This project is open source and can be found <a href="">here on github</a>
+                               </p>
+                           </div>
+                         `}
                         
     `.setTo(document.body);
     
