@@ -6,6 +6,10 @@ let randomImg = require("./shared.js").randomImg;
 function startClient(key){
     var b = new Bugout(key);
     
+    // won't work on local file system
+    try { history.pushState({}, "", "/?id=" + key); }
+    catch (e){}
+    
     b.on("server", function(address) {
         let refs = tmpl`
             div *cont
@@ -26,9 +30,13 @@ function startClient(key){
             let refs2 = tmpl`
                 div :infos
                     - marginBottom: 50px
+                    span => ${"<a href='/'><- connect to an other board</a>"}
                     div :title *title = ${infos.title}
                     div :description *description => ${infos.description}
                     div :visitors *visitors = ${"Users: " + infos.visitors}
+                    div
+                        span :noselect = ${"Link to this board: "}
+                        span => ${"<a href='"+document.location.href + "?id="+key+"'>board</a>"}
             `.setTo(refs.head);
         }
         

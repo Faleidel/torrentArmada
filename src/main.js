@@ -7,6 +7,7 @@ let startClient = require("./client.js").startClient;
 let getParameterByName = require("./shared.js").getParameterByName;
 let startDirectory = require("./directory.js").startDirectory;
 let getBoards = require("./directory.js").getBoards;
+let getDirectoryAddr = require("./shared.js").getDirectoryAddr;
 
 document.addEventListener("DOMContentLoaded", function(event) {
     if (getParameterByName("dir")) {
@@ -73,7 +74,7 @@ function renderHomePage(){
     refs.startServer.onclick = _ => startServer();
     refs.startClient.onclick = _ => startClient(refs.clientCode.value);
     
-    getBoards("bYZgAump8PhzE5pDYGiNcSMdDSKeHZsp4J", function(boards){
+    getBoards(getDirectoryAddr(), function(boards){
         refs.boards.innerHTML = "";
         
         Object.keys(boards).map(id => {

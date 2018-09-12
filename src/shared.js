@@ -1,5 +1,8 @@
 let Bugout = require("bugout");
 
+let directoryAddr = "bPFLSP4gLRN2sfF4RzA4noTmbZrWP1G3fs";
+exports.getDirectoryAddr = _ => directoryAddr;
+
 function renderMd(text) {
     var converter = new showdown.Converter(),
         html      = converter.makeHtml(text+"");
@@ -21,7 +24,7 @@ function renderThreads(threads, cont, interface) {
     let refs2 = tmpl`
         div
             - marginBottom: 10px
-            div = Make a new thread
+            div :newThread = Make a new thread
                 - fontSize: 20px
             *newThread ${renderMakeNewPost(null, interface, true)}
         div :main *cont
@@ -72,16 +75,20 @@ function renderThreads(threads, cont, interface) {
     });
     
     return { newPost: function(post){
-                 renderChild(post, posts[post.parent].rfs.childrens);
+                 let parent = posts[post.parent];
+                 if (parent) parent = parent.rfs.childrens;
+                 else        parent = refs2.cont;
+                 renderChild(post, parent);
              }
            };
 }
 
 function renderMakeNewPost(post, interface, show){
     let comp = tmpl`
-        div *cont
+        div :newPost *cont
             textarea *input
-                - width: 400px
+                - width: 100%
+                - maxWidth: 400px
                 - height: 50px
             div
                 - marginTop: 10px
@@ -98,6 +105,7 @@ function renderMakeNewPost(post, interface, show){
                          , content: refs.input.value
                          , parent: post ? post.id : null
                          });
+        refs.input.value = "";
     }
     
     let compInt = { show: function() {refs.cont.style.display = "block"; this.visible = true}

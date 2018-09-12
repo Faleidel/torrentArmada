@@ -1,10 +1,6 @@
 let Bugout = require("bugout");
 let getParameterByName = require("./shared.js").getParameterByName;
 
-// TEMP DIR
-// bYZgAump8PhzE5pDYGiNcSMdDSKeHZsp4J
-// file:///Users/mongeaur/Desktop/prog/javascript/torrentArmada/client/index.html?dir=Bog6atdpgym4REZTLo8ibNBafzn5YPSGjjSB4UXyx5zXXGabTYHr
-
 function startDirectory(){
     var opts = {};
     

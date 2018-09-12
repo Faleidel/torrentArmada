@@ -1,4 +1,4 @@
 .DS_Store
-directoryKey.txt
-node_modules/
+node_modules
 client/bundle.js
+directoryKey.txt

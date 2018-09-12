@@ -45,6 +45,7 @@ body {
 
 .infos .title {
     font-size: 50px;
+    margin-top: 30px;
 }
 
 .infos .description {
@@ -97,4 +98,18 @@ input, textarea {
 .board .name, .board .date {
     font-size: 20px;
     margin-left: 15px;
+}
+
+@media screen and (max-width: 900px) {
+    .newPost {
+        margin: 10px;
+    }
+    
+    .newThread {
+        margin-left: 10px;
+    }
+    
+    .infos {
+        margin-left: 10px;
+    }
 }
