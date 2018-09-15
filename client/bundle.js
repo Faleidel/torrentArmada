@@ -23568,6 +23568,8 @@ function renderHomePage(){
                     - maxWidth: 450px
                     - margin: auto
                     - marginTop: 20px
+                    - padding: 10px
+                    - textAlign: center
                 
                 div :linkButton *startServer = or create your own
                     - textAlign: center
@@ -23589,7 +23591,7 @@ function renderHomePage(){
                         - marginLeft: 10px
                         (click) ${_ => startServer(JSON.parse(refs.serverData.value))}
                 div => ${` <div class="about">
-                               <h2>Whats is this?<h2>
+                               <h2>Whats is this?</h2>
                                <p> This is a peer to peer message board with reddit like comments base on WebRTC and web torrents technologie.
                                    It uses <a href="https://github.com/chr15m/bugout">bugout</a> for the WebRTC and web torrents.
                                </p>
