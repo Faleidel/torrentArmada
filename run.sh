@@ -1,1 +1,1 @@
-open client/index.html
+open index.html
