@@ -1,7 +1,7 @@
 let Bugout = require("bugout");
 let getParameterByName = require("./shared.js").getParameterByName;
 
-let isNode = typeof process != undefined;
+let isNode = process.title != "browser";
 
 function startDirectory(){
     var opts = {};
@@ -16,7 +16,6 @@ function startDirectory(){
     }
     
     var b = new Bugout(opts);
-    
     
     var boards = {};
     

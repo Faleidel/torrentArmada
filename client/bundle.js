@@ -23434,7 +23434,7 @@ exports.startClient = startClient;
 let Bugout = require("bugout");
 let getParameterByName = require("./shared.js").getParameterByName;
 
-let isNode = typeof process != undefined;
+let isNode = process.title != "browser";
 
 function startDirectory(){
     var opts = {};
@@ -23449,7 +23449,6 @@ function startDirectory(){
     }
     
     var b = new Bugout(opts);
-    
     
     var boards = {};
     
@@ -23710,7 +23709,7 @@ function startServer(opts){
     let boardDescription = "Your board description";
     let visitors         = 0;
     
-    let user = { name: "User" + Math.floor(Math.random()*100)
+    let user = { name: "Admin"
                , isAdmin: true
                };
         

@@ -56,7 +56,7 @@ function startServer(opts){
     let boardDescription = "Your board description";
     let visitors         = 0;
     
-    let user = { name: "User" + Math.floor(Math.random()*100)
+    let user = { name: "Admin"
                , isAdmin: true
                };
         
