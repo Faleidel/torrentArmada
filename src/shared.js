@@ -20,13 +20,13 @@ function getParameterByName(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-function renderThreads(threads, cont, interface) {
+function renderThreads(threads, user, cont, interface) {
     let refs2 = tmpl`
         div
             - marginBottom: 10px
             div :newThread = Make a new thread
                 - fontSize: 20px
-            *newThread ${renderMakeNewPost(null, interface, true)}
+            *newThread ${renderMakeNewPost(null, user, interface, true)}
         div :main *cont
     `.setTo(cont);
     
@@ -35,12 +35,12 @@ function renderThreads(threads, cont, interface) {
     function renderChild(post, parent){
         let rfs = tmpl`
             div :post *post
-                div :user = ${post.user}
+                div :user *user = ${post.user}
                 div :date = ${new Date(post.date).toDateString()}
                 div :content => ${renderMd(post.content)}
                 div :answer *answer = answer
                     (click) ${answer}
-                *ans ${renderMakeNewPost(post, {mkPost: p => {rfs.ans.hide(); interface.mkPost(p)}}, false)}
+                *ans ${renderMakeNewPost(post, user, {mkPost: p => {rfs.ans.hide(); interface.mkPost(p)}}, false)}
                 stIf ${!!interface.deletePost}
                     span :linkButton *delete = delete
                         - marginRight: 5px
@@ -50,6 +50,9 @@ function renderThreads(threads, cont, interface) {
                         (click) ${_ => interface.deletePost(post)}
                 div :childrens *childrens
         `.appendTo(parent);
+        
+        if (post.admin)
+            rfs.user.style.color = "gold";
         
         if (!post.parent)
             rfs.post.classList.add("rootPost");
@@ -83,9 +86,14 @@ function renderThreads(threads, cont, interface) {
            };
 }
 
-function renderMakeNewPost(post, interface, show){
+function renderMakeNewPost(post, user, interface, show){
+    console.log(user.name);
+    
     let comp = tmpl`
         div :newPost *cont
+            input *userName = ${user.name}
+                - display: block
+                (input) ${e => user.name = comp.obj.userName.value}
             textarea *input
                 - width: 100%
                 - maxWidth: 400px
@@ -101,7 +109,7 @@ function renderMakeNewPost(post, interface, show){
         refs.cont.style.display = "none";
     
     function sendPost(){
-        interface.mkPost({ user: "blablabla"
+        interface.mkPost({ user: user.name
                          , content: refs.input.value
                          , parent: post ? post.id : null
                          });

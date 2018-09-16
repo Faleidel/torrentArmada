@@ -23355,7 +23355,6 @@ function extend(target) {
 
 },{}],209:[function(require,module,exports){
 let Bugout = require("bugout");
-let renderMakeNewPost = require("./shared.js").renderMakeNewPost;
 let renderThreads = require("./shared.js").renderThreads;
 let randomImg = require("./shared.js").randomImg;
 
@@ -23403,10 +23402,14 @@ function startClient(key){
         // THREADS
         let threadsInterface = null;
         
+        let user = { name: "User" + Math.floor(Math.random()*100)
+                   , isAdmin: false
+                   };
+        
         b.rpc( "getThreads"
              , {}
              , threads => {
-                   threadsInterface = renderThreads(threads, refs.threads, {
+                   threadsInterface = renderThreads(threads, user, refs.threads, {
                        mkPost: post => b.rpc( "mkPost", post, _ => {})
                    })
                }
@@ -23427,14 +23430,23 @@ function startClient(key){
 exports.startClient = startClient;
 
 },{"./shared.js":213,"bugout":41}],210:[function(require,module,exports){
+(function (process){
 let Bugout = require("bugout");
 let getParameterByName = require("./shared.js").getParameterByName;
+
+let isNode = typeof process != undefined;
 
 function startDirectory(){
     var opts = {};
     
-    if (getParameterByName("dir") && getParameterByName("dir") != "0")
-        opts.seed = getParameterByName("dir");
+    if (!isNode)
+        if (getParameterByName("dir") && getParameterByName("dir") != "0")
+            opts.seed = getParameterByName("dir");
+    else {
+        let fs = require("fs");
+        opts.seed = fs.readFileSync("../directoryKey.txt", "UTF-8").split("\n")[0];
+        console.log("Got seed");
+    }
     
     var b = new Bugout(opts);
     
@@ -23478,19 +23490,24 @@ function startDirectory(){
     
     // RENDER
     function render(){
-        let refs = tmpl`
-            div = ${"Addr: " + b.address()}
-            div = ${document.location.href + "?dir=" + b.seed}
-            div *list
-        `.setTo(document.body);
-        
-        Object.keys(boards).map(id => {
-            let name = boards[id].name;
+        if (!isNode) {
+            let refs = tmpl`
+                div = ${"Addr: " + b.address()}
+                div = ${document.location.href + "?dir=" + b.seed}
+                div *list
+            `.setTo(document.body);
             
-            let rfs = tmpl`
-                div = ${id + " " + name}
-            `.appendTo(refs.list);
-        });
+            Object.keys(boards).map(id => {
+                let name = boards[id].name;
+                
+                let rfs = tmpl`
+                    div = ${id + " " + name}
+                `.appendTo(refs.list);
+            });
+        }
+        else {
+            console.log(boards);
+        }
     }
     render();
 }
@@ -23521,7 +23538,11 @@ exports.addBoard = addBoard;
 exports.getBoards = getBoards;
 exports.startDirectory = startDirectory;
 
-},{"./shared.js":213,"bugout":41}],211:[function(require,module,exports){
+if (isNode)
+    startDirectory();
+
+}).call(this,require('_process'))
+},{"./shared.js":213,"_process":334,"bugout":41,"fs":214}],211:[function(require,module,exports){
 let Bugout = require("bugout");
 let renderMakeNewPost = require("./shared.js").renderMakeNewPost;
 let renderThreads = require("./shared.js").renderThreads;
@@ -23597,7 +23618,7 @@ function renderHomePage(){
                                </p>
                                <p> Each board is hosted on the client browser tab that created it.
                                    The board list is made using a hardcoded bugout address that simply register board names.
-                                   This project is open source and can be found <a href="">here on github</a>
+                                   This project is open source and can be found <a href="https://github.com/Faleidel/torrentArmada">here on github</a>
                                </p>
                            </div>
                          `}
@@ -23632,7 +23653,6 @@ function renderHomePage(){
 exports.renderHomePage = renderHomePage;
 },{"./client.js":209,"./directory.js":210,"./server.js":212,"./shared.js":213,"bugout":41}],212:[function(require,module,exports){
 let Bugout = require("bugout");
-let renderMakeNewPost = require("./shared.js").renderMakeNewPost;
 let renderThreads = require("./shared.js").renderThreads;
 let randomImg = require("./shared.js").randomImg;
 let addBoard = require("./directory").addBoard;
@@ -23643,8 +23663,9 @@ function startServer(opts){
     var b = opts ? new Bugout({seed: opts.seed}) : new Bugout();
     
     // NEW POST
-    function newPost(user, content, parent){
+    function newPost(user, isAdmin, content, parent){
         let post = { user: user
+                   , admin: isAdmin
                    , content: content
                    , childrens: []
                    , date: new Date().getTime()
@@ -23688,6 +23709,11 @@ function startServer(opts){
     let boardName        = "Your board name";
     let boardDescription = "Your board description";
     let visitors         = 0;
+    
+    let user = { name: "User" + Math.floor(Math.random()*100)
+               , isAdmin: true
+               };
+        
     
     if (opts) {
         if (opts.infos.boardName)
@@ -23781,9 +23807,9 @@ function startServer(opts){
     
     // RENDER THREADS
     function reRenderThreads(){
-        renderThreads(threadList, refs.threads, {
+        renderThreads(threadList, user, refs.threads, {
             mkPost: postData => {
-                let post = newPost(postData.user, postData.content, postData.parent);
+                let post = newPost(postData.user, true, postData.content, postData.parent);
                 b.send({ type: "newPost"
                        , post: post
                        });
@@ -23847,7 +23873,7 @@ function startServer(opts){
     
     // MK POST MSG
     b.register("mkPost", function(address, args, cb){
-        let post = newPost(args.user, args.content, args.parent);
+        let post = newPost(args.user, false, args.content, args.parent);
         cb({});
         b.send({ type: "newPost"
                , post: post
@@ -23889,13 +23915,13 @@ function getParameterByName(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-function renderThreads(threads, cont, interface) {
+function renderThreads(threads, user, cont, interface) {
     let refs2 = tmpl`
         div
             - marginBottom: 10px
             div :newThread = Make a new thread
                 - fontSize: 20px
-            *newThread ${renderMakeNewPost(null, interface, true)}
+            *newThread ${renderMakeNewPost(null, user, interface, true)}
         div :main *cont
     `.setTo(cont);
     
@@ -23904,12 +23930,12 @@ function renderThreads(threads, cont, interface) {
     function renderChild(post, parent){
         let rfs = tmpl`
             div :post *post
-                div :user = ${post.user}
+                div :user *user = ${post.user}
                 div :date = ${new Date(post.date).toDateString()}
                 div :content => ${renderMd(post.content)}
                 div :answer *answer = answer
                     (click) ${answer}
-                *ans ${renderMakeNewPost(post, {mkPost: p => {rfs.ans.hide(); interface.mkPost(p)}}, false)}
+                *ans ${renderMakeNewPost(post, user, {mkPost: p => {rfs.ans.hide(); interface.mkPost(p)}}, false)}
                 stIf ${!!interface.deletePost}
                     span :linkButton *delete = delete
                         - marginRight: 5px
@@ -23919,6 +23945,9 @@ function renderThreads(threads, cont, interface) {
                         (click) ${_ => interface.deletePost(post)}
                 div :childrens *childrens
         `.appendTo(parent);
+        
+        if (post.admin)
+            rfs.user.style.color = "gold";
         
         if (!post.parent)
             rfs.post.classList.add("rootPost");
@@ -23952,9 +23981,14 @@ function renderThreads(threads, cont, interface) {
            };
 }
 
-function renderMakeNewPost(post, interface, show){
+function renderMakeNewPost(post, user, interface, show){
+    console.log(user.name);
+    
     let comp = tmpl`
         div :newPost *cont
+            input *userName = ${user.name}
+                - display: block
+                (input) ${e => user.name = comp.obj.userName.value}
             textarea *input
                 - width: 100%
                 - maxWidth: 400px
@@ -23970,7 +24004,7 @@ function renderMakeNewPost(post, interface, show){
         refs.cont.style.display = "none";
     
     function sendPost(){
-        interface.mkPost({ user: "blablabla"
+        interface.mkPost({ user: user.name
                          , content: refs.input.value
                          , parent: post ? post.id : null
                          });

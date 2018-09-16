@@ -1,5 +1,4 @@
 let Bugout = require("bugout");
-let renderMakeNewPost = require("./shared.js").renderMakeNewPost;
 let renderThreads = require("./shared.js").renderThreads;
 let randomImg = require("./shared.js").randomImg;
 let addBoard = require("./directory").addBoard;
@@ -10,8 +9,9 @@ function startServer(opts){
     var b = opts ? new Bugout({seed: opts.seed}) : new Bugout();
     
     // NEW POST
-    function newPost(user, content, parent){
+    function newPost(user, isAdmin, content, parent){
         let post = { user: user
+                   , admin: isAdmin
                    , content: content
                    , childrens: []
                    , date: new Date().getTime()
@@ -55,6 +55,11 @@ function startServer(opts){
     let boardName        = "Your board name";
     let boardDescription = "Your board description";
     let visitors         = 0;
+    
+    let user = { name: "User" + Math.floor(Math.random()*100)
+               , isAdmin: true
+               };
+        
     
     if (opts) {
         if (opts.infos.boardName)
@@ -148,9 +153,9 @@ function startServer(opts){
     
     // RENDER THREADS
     function reRenderThreads(){
-        renderThreads(threadList, refs.threads, {
+        renderThreads(threadList, user, refs.threads, {
             mkPost: postData => {
-                let post = newPost(postData.user, postData.content, postData.parent);
+                let post = newPost(postData.user, true, postData.content, postData.parent);
                 b.send({ type: "newPost"
                        , post: post
                        });
@@ -214,7 +219,7 @@ function startServer(opts){
     
     // MK POST MSG
     b.register("mkPost", function(address, args, cb){
-        let post = newPost(args.user, args.content, args.parent);
+        let post = newPost(args.user, false, args.content, args.parent);
         cb({});
         b.send({ type: "newPost"
                , post: post

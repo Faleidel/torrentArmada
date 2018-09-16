@@ -1,5 +1,4 @@
 let Bugout = require("bugout");
-let renderMakeNewPost = require("./shared.js").renderMakeNewPost;
 let renderThreads = require("./shared.js").renderThreads;
 let randomImg = require("./shared.js").randomImg;
 
@@ -47,10 +46,14 @@ function startClient(key){
         // THREADS
         let threadsInterface = null;
         
+        let user = { name: "User" + Math.floor(Math.random()*100)
+                   , isAdmin: false
+                   };
+        
         b.rpc( "getThreads"
              , {}
              , threads => {
-                   threadsInterface = renderThreads(threads, refs.threads, {
+                   threadsInterface = renderThreads(threads, user, refs.threads, {
                        mkPost: post => b.rpc( "mkPost", post, _ => {})
                    })
                }
