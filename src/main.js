@@ -73,7 +73,7 @@ function renderHomePage(){
                                </p>
                                <p> Each board is hosted on the client browser tab that created it.
                                    The board list is made using a hardcoded bugout address that simply register board names.
-                                   This project is open source and can be found <a href="">here on github</a>
+                                   This project is open source and can be found <a href="https://github.com/Faleidel/torrentArmada">here on github</a>
                                </p>
                            </div>
                          `}

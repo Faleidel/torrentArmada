@@ -1,11 +1,19 @@
 let Bugout = require("bugout");
 let getParameterByName = require("./shared.js").getParameterByName;
 
+let isNode = typeof process != undefined;
+
 function startDirectory(){
     var opts = {};
     
-    if (getParameterByName("dir") && getParameterByName("dir") != "0")
-        opts.seed = getParameterByName("dir");
+    if (!isNode)
+        if (getParameterByName("dir") && getParameterByName("dir") != "0")
+            opts.seed = getParameterByName("dir");
+    else {
+        let fs = require("fs");
+        opts.seed = fs.readFileSync("../directoryKey.txt", "UTF-8").split("\n")[0];
+        console.log("Got seed");
+    }
     
     var b = new Bugout(opts);
     
@@ -49,19 +57,24 @@ function startDirectory(){
     
     // RENDER
     function render(){
-        let refs = tmpl`
-            div = ${"Addr: " + b.address()}
-            div = ${document.location.href + "?dir=" + b.seed}
-            div *list
-        `.setTo(document.body);
-        
-        Object.keys(boards).map(id => {
-            let name = boards[id].name;
+        if (!isNode) {
+            let refs = tmpl`
+                div = ${"Addr: " + b.address()}
+                div = ${document.location.href + "?dir=" + b.seed}
+                div *list
+            `.setTo(document.body);
             
-            let rfs = tmpl`
-                div = ${id + " " + name}
-            `.appendTo(refs.list);
-        });
+            Object.keys(boards).map(id => {
+                let name = boards[id].name;
+                
+                let rfs = tmpl`
+                    div = ${id + " " + name}
+                `.appendTo(refs.list);
+            });
+        }
+        else {
+            console.log(boards);
+        }
     }
     render();
 }
@@ -91,3 +104,6 @@ function addBoard(key ,id, name){
 exports.addBoard = addBoard;
 exports.getBoards = getBoards;
 exports.startDirectory = startDirectory;
+
+if (isNode)
+    startDirectory();
