@@ -83,6 +83,10 @@ function startServer(opts){
                     - maxWidth: 900px
                     - margin: auto
                     - paddingTop: 50px
+                    div :hidableInfo *explanation
+                        div :close = x
+                            (click) ${_ => refs.explanation.remove()}
+                        div = ${`Congradulation, you created a board! It's name will be listed on the home page for you. Just remember that the board will only stay accessible while this browser tab is open! It's your browser that is serving the users data, no central server is involved.`}
                     div
                         div = Board name:
                             - fontSize: 25px

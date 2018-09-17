@@ -23737,6 +23737,10 @@ function startServer(opts){
                     - maxWidth: 900px
                     - margin: auto
                     - paddingTop: 50px
+                    div :hidableInfo *explanation
+                        div :close = x
+                            (click) ${_ => refs.explanation.remove()}
+                        div = ${`Congradulation, you created a board! It's name will be listed on the home page for you. Just remember that the board will only stay accessible while this browser tab is open! It's your browser that is serving the users data, no central server is involved.`}
                     div
                         div = Board name:
                             - fontSize: 25px
@@ -23923,6 +23927,9 @@ function renderThreads(threads, user, cont, interface) {
                 - fontSize: 20px
             *newThread ${renderMakeNewPost(null, user, interface, true)}
         div :main *cont
+            stIf ${threads.length == 0}
+                div :noThreads *noThreads = There is no threads right now
+                    - padding: 20px 0
     `.setTo(cont);
     
     let posts = {};
@@ -23973,6 +23980,9 @@ function renderThreads(threads, user, cont, interface) {
     });
     
     return { newPost: function(post){
+                 if (refs.noThreads)
+                     refs.noThreads.remove();
+                 
                  let parent = posts[post.parent];
                  if (parent) parent = parent.rfs.childrens;
                  else        parent = refs2.cont;

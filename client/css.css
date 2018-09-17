@@ -110,6 +110,24 @@ input, textarea {
     font-size: 1.2em;
 }
 
+.hidableInfo {
+    background: #00cbff66;
+    border-radius: 7px;
+    padding: 32px;
+    margin-bottom: 20px;
+    position: relative;
+    font-size: 22px;
+}
+
+.hidableInfo .close {
+    position: absolute;
+    right: 11px;
+    top: 5px;
+    font-family: sans-serif;
+    font-size: 25px;
+    cursor: pointer;
+}
+
 @media screen and (max-width: 900px) {
     .newPost {
         margin: 10px;

@@ -28,6 +28,9 @@ function renderThreads(threads, user, cont, interface) {
                 - fontSize: 20px
             *newThread ${renderMakeNewPost(null, user, interface, true)}
         div :main *cont
+            stIf ${threads.length == 0}
+                div :noThreads *noThreads = There is no threads right now
+                    - padding: 20px 0
     `.setTo(cont);
     
     let posts = {};
@@ -78,6 +81,9 @@ function renderThreads(threads, user, cont, interface) {
     });
     
     return { newPost: function(post){
+                 if (refs.noThreads)
+                     refs.noThreads.remove();
+                 
                  let parent = posts[post.parent];
                  if (parent) parent = parent.rfs.childrens;
                  else        parent = refs2.cont;
