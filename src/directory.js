@@ -83,6 +83,7 @@ function getBoards(key, cb){
     
     b.on("server", function(){
         b.rpc("getBoards", {}, function(boards) {
+            console.log(boards);
             cb(boards);
             b.close();
         });

@@ -23516,6 +23516,7 @@ function getBoards(key, cb){
     
     b.on("server", function(){
         b.rpc("getBoards", {}, function(boards) {
+            console.log(boards);
             cb(boards);
             b.close();
         });
@@ -24019,9 +24020,9 @@ function renderMakeNewPost(post, user, interface, show){
 }
 
 function randomImg(){
-    const list = [ "url(imgs/full-bloom.png)"
-                 , "url(imgs/seigaiha.png)"
-                 , "url(imgs/topography.png)"
+    const list = [ "url(client/imgs/full-bloom.png)"
+                 , "url(client/imgs/seigaiha.png)"
+                 , "url(client/imgs/topography.png)"
                  ];
     
     return list[Math.floor(Math.random()*list.length)];
