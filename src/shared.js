@@ -81,13 +81,18 @@ function renderThreads(threads, user, cont, interface) {
     });
     
     return { newPost: function(post){
-                 if (refs.noThreads)
-                     refs.noThreads.remove();
+                 console.log(1);
+                 if (refs2.noThreads)
+                     refs2.noThreads.remove();
+                 console.log(2);
                  
                  let parent = posts[post.parent];
+                 console.log(3);
                  if (parent) parent = parent.rfs.childrens;
                  else        parent = refs2.cont;
+                 console.log(4);
                  renderChild(post, parent);
+                 console.log(5);
              }
            };
 }

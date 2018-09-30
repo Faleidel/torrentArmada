@@ -95,7 +95,6 @@ function addBoard(key ,id, name){
     
     b.on("server", function(){
         b.rpc("addBoard", {id: id, name: name}, function(boards) {
-            cb(boards);
             b.close();
         });
     });

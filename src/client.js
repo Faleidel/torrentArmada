@@ -61,6 +61,7 @@ function startClient(key){
         
         // MESSAGES
         b.on("message", (address, message, ddd) => {
+            console.log("NEW MESSAGE", message, threadsInterface);
             if (message.type == "newPost") {
                 threadsInterface.newPost(message.post);
             }

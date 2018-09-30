@@ -4907,7 +4907,7 @@ function Bugout(identifier, opts) {
     this.seed = bs58chk.encode(Buffer.from(nacl.randomBytes(32)), SEEDPREFIX);
   }
 
-  this.timeout = PEERTIMEOUT;
+  this.timeout = opts["timeout"] || PEERTIMEOUT;
   this.keyPair = opts["keyPair"] || nacl.sign.keyPair.fromSeed(Uint8Array.from(bs58chk.decode(this.seed).data).slice(1));
   // ephemeral encryption key only used for this session
   this.keyPairEncrypt = nacl.box.keyPair();
@@ -4924,7 +4924,9 @@ function Bugout(identifier, opts) {
   this.api = {};
   this.callbacks = {};
   this.serveraddress = null;
+  this.heartbeattimer = null;
   
+  debug("address", this.address());
   debug("identifier", this.identifier);
   debug("public key", this.pk);
   debug("encryption key", this.ek);
@@ -4948,9 +4950,42 @@ function Bugout(identifier, opts) {
   }, this));
   torrent.on("wire", partial(attach, this, this.identifier));
   this.torrent = torrent;
-  // TODO: background task to purge old .peers table of entries older than this.timeout
-  // TODO: send ping/keepalive message
+
+  if (opts.heartbeat) {
+    this.heartbeat(opts.heartbeat);
+  }
 }
+
+// start a heartbeat and expire old "seen" peers who don't send us a heartbeat
+Bugout.prototype.heartbeat = function(interval) {
+  var interval = interval || 30000;
+  this.heartbeattimer = setInterval(partial(function (bugout) {
+    // broadcast a 'ping' message
+    bugout.ping();
+    var t = now();
+    // remove any 'peers' entries with timestamps older than timeout
+    for (var p in bugout.peers) {
+      var pk = bugout.peers[p].pk;
+      var address = bugout.address(pk);
+      var last = bugout.peers[p].last;
+      if (last + bugout.timeout < t) {
+        delete bugout.peers[p];
+        bugout.emit("timeout", address);
+        bugout.emit("left", address);
+      }
+    }
+  }, this), interval);
+}
+
+// clean up this bugout instance
+Bugout.prototype.destroy = function(cb) {
+  clearInterval(this.heartbeattimer);
+  var packet = makePacket(this, {"y": "x"});
+  sendRaw(this, packet);
+  this.wt.remove(this.torrent, cb);
+}
+
+Bugout.prototype.close = Bugout.prototype.destroy;
 
 Bugout.prototype.connections = function() {
   if (this.torrent.wires.length != this.lastwirecount) {
@@ -4969,8 +5004,10 @@ Bugout.prototype.address = function(pk) {
   return bs58chk.encode(new ripemd160().update(Buffer.from(nacl.hash(pk))).digest(), ADDRESSPREFIX);
 }
 
-Bugout.prototype.close = function() {
-  this.wt.remove(this.torrent)
+Bugout.prototype.ping = function() {
+    // send a ping out so they know about us too
+    var packet = makePacket(this, {"y": "p"});
+    sendRaw(this, packet);
 }
 
 Bugout.prototype.send = function(address, message) {
@@ -5056,7 +5093,10 @@ function encryptPacket(bugout, pk, packet) {
 function sendRaw(bugout, message) {
   var wires = bugout.torrent.wires;
   for (var w=0; w<wires.length; w++) {
-    wires[w].extended(EXT, message);
+    var extendedhandshake = wires[w]["peerExtendedHandshake"];
+    if (extendedhandshake && extendedhandshake.m && extendedhandshake.m[EXT]) {
+      wires[w].extended(EXT, message);
+    }
   }
   var hash = toHex(nacl.hash(message).slice(16));
   debug("sent", hash, "to", wires.length, "wires");
@@ -5124,17 +5164,31 @@ function onMessage(bugout, identifier, wire, message) {
           if (bugout.callbacks[nonce]) {
             var responsestring = packet.rr.toString();
             try {
-              bugout.callbacks[nonce](JSON.parse(responsestring));
+              var responsestringstruct = JSON.parse(responsestring);
             } catch(e) {
               debug("Malformed response JSON: " + responsestring);
+              var responsestringstruct = null;
             }
-            delete bugout.callbacks[nonce];
+            if (bugout.callbacks[nonce] && responsestringstruct) {
+              debug("rpc-response", bugout.address(pk), nonce, responsestringstruct);
+              bugout.emit("rpc-response", bugout.address(pk), nonce, responsestringstruct);
+              bugout.callbacks[nonce](responsestringstruct);
+              delete bugout.callbacks[nonce];
+            } else {
+              debug("RPC response nonce not known:", nonce);
+            }
           } else {
             debug("dropped response with no callback.", nonce);
           }
         } else if (packet.y == "p") {
-          debug("ping from", bugout.address(pk));
-          bugout.emit("ping", bugout.address(pk));
+          var address = bugout.address(pk);
+          debug("ping from", address);
+          bugout.emit("ping", address);
+        } else if (packet.y == "x") {
+          var address = bugout.address(pk);
+          debug("got left from", address);
+          delete bugout.peers[address];
+          bugout.emit("left", address);
         } else {
           // TODO: handle ping/keep-alive message
           debug("unknown packet type");
@@ -5176,7 +5230,7 @@ function sawPeer(bugout, pk, ek, identifier) {
   var t = now();
   var address = bugout.address(pk);
   // ignore ourself
-  if (pk != bugout.pk) {
+  if (address != bugout.address()) {
     // if we haven't seen this peer for a while
     if (!bugout.peers[address] || bugout.peers[address].last + bugout.timeout < t) {
       bugout.peers[address] = {
@@ -5211,7 +5265,7 @@ function attach(bugout, identifier, wire, addr) {
 
 function detach(bugout, identifier, wire) {
   debug("wire left", wire.peerId, identifier);
-  bugout.emit("left", bugout.torrent.wires.length, wire);
+  bugout.emit("wireleft", bugout.torrent.wires.length, wire);
   bugout.connections();
 }
 
@@ -5232,9 +5286,9 @@ function wirefn(bugout, identifier, wire) {
 
 function onExtendedHandshake(bugout, identifier, wire, handshake) {
   debug("wire extended handshake", bugout.address(handshake.pk.toString()), wire.peerId, handshake);
-  bugout.emit("wire", bugout.torrent.wires.length, wire);
+  bugout.emit("wireseen", bugout.torrent.wires.length, wire);
   bugout.connections();
-  // TODO: check sig and drop on failure
+  // TODO: check sig and drop on failure - wire.peerExtendedHandshake
   sawPeer(bugout, handshake.pk.toString(), handshake.ek.toString(), identifier);
 }
 
@@ -23417,6 +23471,7 @@ function startClient(key){
         
         // MESSAGES
         b.on("message", (address, message, ddd) => {
+            console.log("NEW MESSAGE", message, threadsInterface);
             if (message.type == "newPost") {
                 threadsInterface.newPost(message.post);
             }
@@ -23528,7 +23583,6 @@ function addBoard(key ,id, name){
     
     b.on("server", function(){
         b.rpc("addBoard", {id: id, name: name}, function(boards) {
-            cb(boards);
             b.close();
         });
     });
@@ -23980,13 +24034,18 @@ function renderThreads(threads, user, cont, interface) {
     });
     
     return { newPost: function(post){
-                 if (refs.noThreads)
-                     refs.noThreads.remove();
+                 console.log(1);
+                 if (refs2.noThreads)
+                     refs2.noThreads.remove();
+                 console.log(2);
                  
                  let parent = posts[post.parent];
+                 console.log(3);
                  if (parent) parent = parent.rfs.childrens;
                  else        parent = refs2.cont;
+                 console.log(4);
                  renderChild(post, parent);
+                 console.log(5);
              }
            };
 }
