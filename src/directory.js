@@ -39,6 +39,7 @@ function startDirectory(){
     // MK ADD BOARD
     b.register("addBoard", function(address, args, cb){
         console.log("addBoard",args);
+        cb("ok");
         if (   typeof args.name == "string"
             && typeof args.id == "string"
             && args.name.length < 35
@@ -48,10 +49,7 @@ function startDirectory(){
                               , date: new Date().getTime()
                               };
             render();
-            cb("ok");
         }
-        else
-           cb("not");
     });
     
     // RENDER
@@ -84,8 +82,8 @@ function getBoards(key, cb){
     b.on("server", function(){
         b.rpc("getBoards", {}, function(boards) {
             console.log(boards);
-            cb(boards);
             b.close();
+            cb(boards);
         });
     });
 }
